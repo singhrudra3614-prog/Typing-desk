@@ -1,0 +1,8 @@
+{
+  "name": "TypeQuest: Typing Game Adventure",
+  "description": "An addictive typing learning platform with gamified modes like Zombie Attack and Space Shooter. Improve your WPM and accuracy while unlocking achievements and competing on leaderboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

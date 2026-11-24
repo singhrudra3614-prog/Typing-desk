@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user progress, level, XP, and customization settings.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "xp": { "type": "number" },
+        "level": { "type": "number" },
+        "coins": { "type": "number" },
+        "totalWordsTyped": { "type": "number" },
+        "averageWpm": { "type": "number" },
+        "averageAccuracy": { "type": "number" },
+        "bestWpm": { "type": "number" },
+        "streak": { "type": "number" },
+        "lastLogin": { "type": "string", "format": "date-time" },
+        "unlockedThemes": { "type": "array" },
+        "activeTheme": { "type": "string", "enum": ["cyberpunk", "retro", "minimalist"] },
+        "unlockedAvatars": { "type": "array" },
+        "unlockedBadges": { "type": "array" }
+      },
+      "required": ["uid", "xp", "level", "coins"]
+    },
+    "GameSession": {
+      "title": "Game Session",
+      "description": "Records an individual typing game attempt.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "gameMode": { "type": "string", "enum": ["zombie", "car", "space", "ninja", "meme", "survival"] },
+        "wpm": { "type": "number" },
+        "accuracy": { "type": "number" },
+        "score": { "type": "number" },
+        "wordsTyped": { "type": "number" },
+        "errors": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "gameMode", "wpm", "accuracy", "timestamp"]
+    },
+    "Achievement": {
+      "title": "Achievement",
+      "description": "Defines a badge or goal that can be unlocked.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "requirementType": { "type": "string" },
+        "requirementValue": { "type": "number" },
+        "icon": { "type": "string" }
+      }
+    },
+    "Match": {
+      "title": "Multiplayer Match",
+      "description": "A real-time typing duel between two players.",
+      "type": "object",
+      "properties": {
+        "matchId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "starting", "active", "finished"] },
+        "player1": { "$ref": "MatchPlayer" },
+        "player2": { "$ref": "MatchPlayer" },
+        "winner": { "type": "string" },
+        "wordSeed": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "startTime": { "type": "string", "format": "date-time" }
+      },
+      "required": ["matchId", "status", "player1", "createdAt"]
+    },
+    "MatchPlayer": {
+      "title": "Match Player",
+      "description": "Real-time state and stats for a player in a match.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "wpm": { "type": "number" },
+        "accuracy": { "type": "number" },
+        "score": { "type": "number" },
+        "isReady": { "type": "boolean" },
+        "lastUpdate": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "The root user document containing profile and aggregate stats."
+    },
+    "users/{userId}/sessions/{sessionId}": {
+      "schema": "GameSession",
+      "description": "Sub-collection of historical game sessions for a user."
+    },
+    "achievements/{achievementId}": {
+      "schema": "Achievement",
+      "description": "Global list of available achievements."
+    },
+    "leaderboards/{mode}/entries/{userId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string" },
+          "wpm": { "type": "number" },
+          "score": { "type": "number" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Leaderboard entries for specific game modes."
+    },
+    "matches/{matchId}": {
+      "schema": "Match",
+      "description": "Active and historical multiplayer matches."
+    }
+  }
+}

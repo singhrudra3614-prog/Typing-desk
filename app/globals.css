@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui;
+  --font-display: var(--font-display), ui-sans-serif, system-ui;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular;
+
+  --color-neon-cyan: var(--neon-cyan);
+  --color-neon-pink: var(--neon-pink);
+  --color-neon-green: var(--neon-green);
+  --color-neon-purple: var(--neon-purple);
+  
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 3s ease-in-out infinite;
+}
+
+:root {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --neon-cyan: #06b6d4;
+  --neon-pink: #ec4899;
+  --neon-green: #22c55e;
+  --neon-purple: #a855f7;
+}
+
+.theme-cyberpunk {
+  --neon-cyan: #06b6d4;
+  --neon-pink: #ec4899;
+  --neon-green: #22c55e;
+  --neon-purple: #a855f7;
+}
+
+.theme-retro {
+  --neon-cyan: #facc15;
+  --neon-pink: #f97316;
+  --neon-green: #ef4444;
+  --neon-purple: #f43f5e;
+}
+
+.theme-minimalist {
+  --neon-cyan: #94a3b8;
+  --neon-pink: #cbd5e1;
+  --neon-green: #64748b;
+  --neon-purple: #475569;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+:root {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-slate-800);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply selection:bg-neon-cyan/30 selection:text-white;
+  }
+}
+
+@layer utilities {
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.3);
+  }
+  .text-glow-pink {
+    text-shadow: 0 0 10px rgba(236, 72, 153, 0.5), 0 0 20px rgba(236, 72, 153, 0.3);
+  }
+  .bg-glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+  .border-glass {
+    @apply border border-white/10;
+  }
+}

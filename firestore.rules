@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.xp is number && data.level is number && data.coins is number
+          && data.keys().hasAll(['uid', 'xp', 'level', 'coins'])
+          && data.uid == request.auth.uid;
+      }
+
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data)
+        && (
+          // Action: Update XP/Level/Coins/Stats
+          request.resource.data.diff(resource.data).affectedKeys().hasAny(['xp', 'level', 'coins', 'totalWordsTyped', 'averageWpm', 'averageAccuracy', 'bestWpm', 'streak', 'lastLogin', 'unlockedThemes', 'activeTheme', 'unlockedAvatars'])
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid'])
+        );
+    }
+
+    // --- Game Sessions ---
+    match /users/{userId}/sessions/{sessionId} {
+      function isValidSession(data) {
+        return data.userId == userId && data.wpm is number && data.accuracy is number
+          && data.gameMode in ['zombie', 'car', 'space', 'ninja', 'meme', 'survival'];
+      }
+
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSession(request.resource.data);
+    }
+
+    // --- Leaderboards ---
+    match /leaderboards/{mode}/entries/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) && request.resource.data.wpm is number;
+    }
+
+    // --- Global Configs (Achievements, Lessons) ---
+    match /achievements/{id} {
+      allow read: if isSignedIn();
+    }
+
+    // --- Multiplayer Matches ---
+    match /matches/{matchId} {
+      function isValidMatch(data) {
+        return data.matchId is string && data.status in ['waiting', 'starting', 'active', 'finished']
+          && data.player1.uid is string;
+      }
+
+      function isParticipant() {
+        return isSignedIn() && (resource.data.player1.uid == request.auth.uid || (resource.data.player2 != null && resource.data.player2.uid == request.auth.uid));
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidMatch(request.resource.data) && request.resource.data.player1.uid == request.auth.uid;
+      
+      allow delete: if isSignedIn() && resource.data.player1.uid == request.auth.uid && resource.data.status == 'waiting';
+
+      allow update: if isSignedIn() && (
+        // Case 1: Player 2 Joins a waiting match
+        (resource.data.status == 'waiting' && 
+         request.resource.data.player2 != null && 
+         request.resource.data.player2.uid == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player2'])) ||
+        
+        // Case 2: Player 1 Starts the duel (updates status, wordSeed, startTime)
+        (resource.data.player1.uid == request.auth.uid &&
+         resource.data.status == 'waiting' &&
+         request.resource.data.status == 'starting' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'wordSeed', 'startTime'])) ||
+        
+        // Case 3: Player 1 updates status, winner, or gameplay progress
+        (resource.data.player1.uid == request.auth.uid && 
+         request.resource.data.diff(resource.data).affectedKeys().hasAny(['player1', 'player2', 'status', 'winner', 'startTime'])) ||
+        
+        // Case 4: Player 2 updates status, winner, or gameplay progress, or resets player2
+        (resource.data.player2 != null && 
+         resource.data.player2.uid == request.auth.uid && 
+         request.resource.data.diff(resource.data).affectedKeys().hasAny(['player2', 'status', 'winner', 'startTime']))
+      );
+    }
+  }
+}
